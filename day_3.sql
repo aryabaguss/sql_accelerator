@@ -376,6 +376,37 @@ join title t on s.employee_id = t.employee_id
 where order_title > 1
 order by fullname
 
+-- KJ 13 --
+with temp_title as (
+	select 
+		concat(e.first_name,' ',e.last_name) as fullname,
+		de.department_id,
+		t.title as from_title,
+		t.from_date,
+		t.to_date,
+		lead(t.title) over(partition by concat(e.first_name,' ',e.last_name)
+			order by t.from_date asc)
+			as to_title
+	from employee e 
+	join title t on t.employee_id = e.id 
+	join department_employee de on de.employee_id = e.id 
+	where de.to_date = '9999-01-01'
+)
+select 
+	d.dept_name ,
+	--t.fullname,
+	--t.from_title,
+	--t.to_title,
+	round(min((t.to_date - t.from_date)/365),3) as min_years,
+	round(max((t.to_date - t.from_date)/365),3) as max_years,
+	round(avg((t.to_date - t.from_date)/365),2) as avg_years
+	--round((t.to_date - t.from_date)/365) as years
+from temp_title t
+join department d on d.id = t.department_id
+where (t.from_title = 'Staff' and t.to_title = 'Senior Staff') or 
+	  (t.from_title = 'Assistant Engineer' and t.to_title = 'Engineer')
+group by d.dept_name 
+order by avg_years 
 
 
 -- 14 --
